@@ -1,0 +1,22 @@
+
+knowledgeBase = []
+query = []
+
+def readData(data):
+    f = open(data, 'r')
+    for line in f:
+        s = line.split()
+        print(s)
+
+def convertToCNF(knowledge):
+
+    pass
+
+def resolution(knowledgeBase, query):
+    CNF = convertToCNF(knowlegdeBase)
+    
+    pass
+
+def resolve(clause1, clause2):
+
+    pass

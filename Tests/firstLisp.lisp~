@@ -1,0 +1,6 @@
+(defun front-back (x)
+       (cons (first x)
+            (last x)
+       )
+)
+(frontback '(a b c))

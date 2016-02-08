@@ -1,0 +1,7 @@
+(defun front-back (x)
+       (cons (first x)
+            (last x)
+       )
+)
+(setf nnew '(a b c))
+(front-back (nnew))

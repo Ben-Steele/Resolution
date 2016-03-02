@@ -1,0 +1,1 @@
+( ( ( not ( animal $x ) ) ( loves jack $x ) ) )

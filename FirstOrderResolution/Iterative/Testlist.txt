@@ -1,0 +1,1 @@
+( ( ( not ( loves $y2 $x2 ) ) ( not ( animal $z2 ) ) ( not ( kills $x2 $z2 ) ) ) )

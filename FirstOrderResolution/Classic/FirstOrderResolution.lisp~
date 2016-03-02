@@ -1,6 +1,7 @@
-
 (setf counter 0)
 (setf counter2 0)
+(setf trueflag nil)
+(setf falseflag nil)
 
 (defun compare (sentence clause)                 ;see if the complement of literal is in clause, return literal if it is (if literal is a negation (not "literal") it will not find the complement)
     (dolist (i clause)                             ;for each literal in clause
@@ -114,11 +115,7 @@
 )
 
 (defun secondClauseLoop (a copy)                                     ;second layer of the iteration
-  ;(if (eq counter 481)
-  ;    (print (first copy))
-  ;    nil
-  ;    )
-  (let ((new (resolve a (first copy)))                               ;resolve two clauses of the KB
+   (let ((new (resolve a (first copy)))                               ;resolve two clauses of the KB
         (temp '()))                                                  ;create temp to add new clauses to
     (if (equal new T)                                                ;if the resolved clause is true
         '(T)                                                         ;the empty set was reached so the resolution is true
@@ -155,8 +152,6 @@
 
 (defun firstClauseLoop (real copy)                                  ;first layer of recursive iteration
   (setf counter (+ counter 1))
-  (print counter)
-  (print (list-length real))
   (let ((a (first copy))                                            ;pick out a clause of the KB
         (new '())                                                   ;this will hold all the new clauses that are resolved
         (new2 '()))                                                 ;a temporary list for formating
@@ -170,7 +165,6 @@
               (progn  
                 (setf new2 (firstClauseLoop real (rest copy)))      ;otherwise save the next step of iteration in new2
                 (setf counter2 (+ counter2 1))
-                ;(print counter2)
                 (if (equal new2 T)                                  ;if new2 is true
                     new2                                            ;return true because the KB resolved successfully
                     (combine new new2)                              ;return the combination of the next iteration with this iteration of recursion
@@ -184,12 +178,6 @@
 
 (defun recurseResolution (clauses)                                               ;takes in full KB including ~a
   (let ((resolved (firstClauseLoop clauses clauses)))                            ;save resolved KB into resolved
-    (setf counter 0)
-    ;(setf counter2 0)
-    (print "================================")
-    (dolist (i clauses)
-      (print i)
-      )
     (if (eq resolved T)                                                          ;if resolved is true, 
         T                                                                        ;the KB resolved successfully so return true
         (progn
@@ -203,30 +191,66 @@
     )
   )
 
-(defun resolution (KB s q)                           ;KB is the knowledge base, a is the current state and query (if "state", then "query")
+(defun resolutiontrue (KB s q)                           ;KB is the knowledge base, a is the current state and query (if "state", then "query")
   (setf KB (append s KB))                            ;add the state to the KB
    (if (equal 'not (first q))                         ;if a is a negative sentence
       (setf KB (cons (rest q) KB))                   ;concatenate the positive sentence onto the KB
-      (setf KB (cons (cons (cons 'not q) '()) KB))   ;concatenate the negative sentence onto the KB
+      (setf KB (cons (cons (cons 'not (cons q '())) nil) KB))   ;concatenate the negative sentence onto the KB
       )
-  (recurseResolution KB)                            ;recursively resolve until the solution is found
+  (setf trueflag (recurseResolution KB))                            ;recursively resolve until the solution is found
 )
 
-"(let ((CNF '(((not (hound $x1)) (howl $x1)) 
+(defun resolutionfalse (KB s q)                           ;KB is the knowledge base, a is the current state and query (if "state", then "query")
+  (setf KB (append s KB))                            ;add the state to the KB
+   (if (equal 'not (first q))                         ;if a is a negative sentence
+      (setf KB (cons (rest q) KB))                   ;concatenate the positive sentence onto the KB
+      (setf KB (cons (cons (cons 'not (cons q '())) nil) KB))   ;concatenate the negative sentence onto the KB
+      )
+  (setf falseflag (recurseResolution KB))                            ;recursively resolve until the solution is found
+)
+
+(defun resolution (KB s q)
+  (let ((opposite nil))
+    (if (equal 'not (first q))                         ;if a is a negative sentence
+        (setf opposite (rest q))                   ;concatenate the positive sentence onto the KB
+        (setf opposite (cons 'not (cons q '())))   ;concatenate the negative sentence onto the KB
+        )
+    (process-run-function "true test" (resolutiontrue KB s q))
+    (process-run-function "false test" (resolutionfalse KB s opposite))
+   ; (loop while (and (equal trueflag nil) (equal falseflag nil)) do
+    ;  (cons nil nil)
+    ;)
+    ;(if (equal trueflag nil)
+    ;    (progn 
+    ;      (process-kill "true test")
+    ;      falseflag
+    ;      )
+    ;    (progn
+    ;      (process-kill "false test")
+    ;      trueflag
+    ;      )
+       ; )
+    )
+  )
+
+(let ((CNF '(((not (hound $x1)) (howl $x1)) 
              ((not (have $x2 $y2)) (not (cat $y2)) (not (have $x2 $z2)) (not (mouse $z2)))
              ((not (ls $x3)) (not (have $x3 $y3)) (not (howl $y3)))
-             ((have john $a1)) 
-             ((cat $a2) (hound $a2))
-             )))           ;CNF form of an example KB
-  (print (resolution CNF '(((ls john)) ((mouse $b))) '((have john $b))))       ;either of the form (not (a)) or ((a))
-)"
+             ((have john a2) ) 
+             ((cat a2) (hound a2))
+             )))                                                             ;CNF form of an example KB
+  (print (resolution CNF '(((ls john)) ((mouse b))) '((have john b))))       ;either of the form (not (a)) or ((a))
+  (sleep 10)
+  (print trueflag)
+  (print falseflag)
+)
 
 ;(print (newclause '((have $x john) (have dave john) (gave $x dave)) '((have dave $y) (not (have dave john)) (not (gave $x $y))) '(((have dave john)) (not (have dave john)) ((nil)))))
 ;(print (factorall '(((NOT (KILLS $X3 $Z3)) (NOT (ANIMAL $Z3)) (NOT (ANIMAL $X3))))))
 ;(print (factor '((NOT (KILLS $X3 $Z3)) (NOT (ANIMAL $Z3)) (NOT (ANIMAL $X3))) '((NOT (KILLS $X3 $Z3)) (NOT (ANIMAL $Z3)) (NOT (ANIMAL $X3)))))
 
 
-(let ((CNF '(((animal (f $x)) (loves (g $x) $x)) 
+"(let ((CNF '(((animal (f $x)) (loves (g $x) $x)) 
             ((not (loves $x2 (f $x2))) (loves (g $x2) $x2)) 
             ((not (loves $y3 $x3)) (not (animal $z3)) (not (kills $x3 $z3)))
             ((not (animal $x4)) (loves jack $x4))
@@ -236,8 +260,8 @@
             )
            )
       )
-  (print (resolution CNF nil '(kills curiosity tuna)))
-)
+  (print (resolution CNF nil '(not (kills curiosity tuna))))
+)"
 
 "(let (( CNF '(((not (animal $x)) (loves jack $x))
               ((not (loves $y2 $x2)) (not (animal $z2)) (not (kills $x2 $z2)))

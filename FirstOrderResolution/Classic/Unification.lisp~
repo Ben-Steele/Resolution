@@ -5,8 +5,8 @@
 (defun unify (x y &optional (bindings nobinding))                             ;form to find the unification of x and y.  bindings is optional and defaults to nobinding as defined above
   (cond ((eq bindings fail) fail)                                             ;if a further step of the recursion failed, return fail
         ((eql x y) bindings)                                                  ;if x and y are equal, unification is complete, return bindings
-        ((variable x) (unify-var x y bindings))                               ;if x is a variable, unify y with that variable
-        ((variable y) (unify-var y x bindings))                               ;if y is a variable, unify x with that variable
+        ((variable1 x) (unify-var x y bindings))                               ;if x is a variable, unify y with that variable
+        ((variable1 y) (unify-var y x bindings))                               ;if y is a variable, unify x with that variable
         ((and (consp x) (consp y))                                            ;if x and y are compound or lists
          (unify (rest x) (rest y) (unify (first x) (first y) bindings))       ;retrun the unification of the smaller pieces
          )
@@ -18,7 +18,7 @@
   (cond ((get-binding var bindings)                             ;if there is already a bindings for var
          (unify (lookup var bindings) x bindings)               ;apply the binding and unify again
          )
-        ((and (variable x) (get-binding x bindings))            ;if there is already a binding for x
+        ((and (variable1 x) (get-binding x bindings))            ;if there is already a binding for x
          (unify var (lookup x bindings) bindings)               ;apply the binding and unify again
          )
         ((occurs-in var x bindings)                             ;occur check
@@ -27,7 +27,7 @@
         )
   )
 
-(defun variable (x)                                        ;tests if x is a variable. all variable will start with a $ in their name.
+(defun variable1 (x)                                        ;tests if x is a variable. all variable will start with a $ in their name.
   (and (symbolp x) (eql (char (symbol-name x) 0) #\$))     ;if the first character of the symbol name for x is $ then return true
 ) 
 
@@ -63,7 +63,7 @@
 
 (defun occurs-in (var x bindings)                                ;Does var occur anywhere inside x?
   (cond ((eq var x) t)                                           ;if var and x are equal, return true
-        ((and (variable x) (get-binding x bindings))             ;if x is a variable and there is already a binding for it
+        ((and (variable1 x) (get-binding x bindings))             ;if x is a variable and there is already a binding for it
          (occurs-in var (lookup x bindings) bindings)            ;apply the binding and do the occur check again
          )
         ((consp x) (or (occurs-in var (first x) bindings)        ;if x is a list, return true if the occur check is true for var and first x (checks first thing in list)
@@ -76,7 +76,7 @@
 (defun subst-bindings (bindings x)                           ;Substitute the value of variables in bindings into x, taking recursively bound variables into account
   (cond ((eq bindings fail) fail)                            ;if the algorithm has already failed, return fail
         ((eq bindings nobinding) x)                          ;if there are no bindings yet, return x as it already is
-        ((and (variable x) (get-binding x bindings))         ;if x is a variable and has a binding
+        ((and (variable1 x) (get-binding x bindings))         ;if x is a variable and has a binding
          (subst-bindings bindings (lookup x bindings))       ;recurse and substitute bindings again after applying the binding that was found
          )
         ((atom x) x)                                         ;if x is an atom, it cannot be bound, so return x

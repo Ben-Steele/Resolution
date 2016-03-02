@@ -1,3 +1,4 @@
+
 (setf trueflag 0)
 (setf falseflag 0)
 
@@ -172,18 +173,52 @@
     )
   )
 
-(defun recurseResolution (clauses)                                               ;takes in full KB including ~a
-  (let ((resolved (firstClauseLoop clauses clauses)))                            ;save resolved KB into resolved
+(defun recurseResolution (using saving maxlength currentlength)                                               ;takes in full KB including ~a
+  (let ((resolved (firstClauseLoop using using)))                            ;save resolved KB into resolved
     (if (eq resolved T)                                                          ;if resolved is true, 
         T                                                                        ;the KB resolved successfully so return true
         (progn
           (setf resolved (combine (factorall resolved) resolved))
-          (if (equal (set-exclusive-or resolved clauses :test #'equal) nil)        ;if clauses has not changed (equal to resolved)
-            nil                                                                  ;KB did not resolve so return nil
-            (recurseResolution resolved)                                         ;otherwise resolve again
+          (let ((sorted (sorter resolved maxlength currentlength)))
+            (setf resolved (car sorted))
+            (setf saving (combine (cadr sorted) saving))
+            (setf maxlength (caddr sorted))
+            (if (equal (set-exclusive-or resolved using :test #'equal) nil)        ;if clauses has not changed (equal to resolved)
+                (if (eq maxlength currentlength)
+                    nil                                                                  ;KB did not resolve so return nil
+                    (extend resolved saving maxlength currentlength)
+                    )
+                (recurseResolution resolved saving maxlength currentlength)
+                )
             )
           )
         )
+    )
+  )
+
+(defun extend (using saving maxlength currentlength)
+  (let ((sorted (sorter saving maxlength (+ currentlength 1))))
+    (setf using (combine using (car sorted)))
+    (setf saving (cadr sorted))
+    (recurseResolution using saving (caddr sorted) (+ currentlength 1))
+    )
+  )
+    
+
+(defun sorter (clauses max length)
+  (let ((use nil)
+        (save nil))
+    (dolist (i clauses)
+      (if (<= (list-length i) length)
+          (setf use (cons i use))
+          (setf save (cons i save))
+          )
+      (if (> (list-length i) max)
+          (setf max (list-length i))
+          nil
+          )
+      )
+    (cons use (cons save (cons max nil)))
     )
   )
 
@@ -193,7 +228,7 @@
       (setf KB (cons (rest q) KB))                   ;concatenate the positive sentence onto the KB
     (setf KB (cons (cons (cons 'not q) nil) KB))   ;concatenate the negative sentence onto the KB
     )
-  (setf trueflag (recurseResolution KB))                            ;recursively resolve until the solution is found
+  (setf trueflag (recurseResolution KB nil 1 1))                            ;recursively resolve until the solution is found
   )
 
 (defun resolutionfalse (KB s q)                           ;KB is the knowledge base, a is the current state and query (if "state", then "query")
@@ -202,10 +237,7 @@
       (setf KB (cons (rest q) KB))                   ;concatenate the positive sentence onto the KB
     (setf KB (cons (cons (cons 'not q) nil) KB))   ;concatenate the negative sentence onto the KB
     )
-  (dolist (i KB)
-    (print i)
-    )
-  (setf falseflag (recurseResolution KB))                            ;recursively resolve until the solution is found
+  (setf falseflag (recurseResolution KB nil 1 1))                            ;recursively resolve until the solution is found
 )
 
 (defun resolution (KB s q)
@@ -216,6 +248,7 @@
         (setf opposite (rest q))                   ;concatenate the positive sentence onto the KB
         (setf opposite (cons 'not q))   ;concatenate the negative sentence onto the KB
         )
+    (print opposite)
     (let ((positive (sb-thread:make-thread (lambda () (resolutiontrue KB s q))))
 	  (negative (sb-thread:make-thread (lambda () (resolutionfalse KB s opposite)))))
       (loop while (and (equal trueflag 0) (equal falseflag 0)) do
@@ -234,16 +267,15 @@
       )
     )
   )
+  
 
 "(let ((CNF '(((not (hound $x1)) (howl $x1)) 
              ((not (have $x2 $y2)) (not (cat $y2)) (not (have $x2 $z2)) (not (mouse $z2)))
              ((not (ls $x3)) (not (have $x3 $y3)) (not (howl $y3)))
-             ((have john a2) ) 
-             ((cat a2) (hound a2))
-             )))                                                             ;CNF form of an example KB
+             ((have john a)) 
+             ((cat a) (hound a))
+             )))           ;CNF form of an example KB
   (print (resolution CNF '(((ls john)) ((mouse b))) '((have john b))))       ;either of the form (not (a)) or ((a))
-  (print trueflag)
-  (print falseflag)
 )"
 
 ;(print (newclause '((have $x john) (have dave john) (gave $x dave)) '((have dave $y) (not (have dave john)) (not (gave $x $y))) '(((have dave john)) (not (have dave john)) ((nil)))))
@@ -261,7 +293,7 @@
             )
            )
       )
-  (print (resolution CNF nil '(not (kills curiosity tuna))))
+  (print (resolution CNF nil '((kills curiosity tuna))))
   (print trueflag)
   (print falseflag)
 )

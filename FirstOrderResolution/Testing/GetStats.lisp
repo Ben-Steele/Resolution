@@ -1,0 +1,11 @@
+
+(setf kb1 (gen-KB 5 2 3))
+(setf newquery (gen-query))
+(print "Iter:")
+(print (Test-Iter newquery))
+(print "Thread-iter:")
+(print (Test-Thread-Iter newquery))
+(print 'Classic:')
+(print (Test-Classic  newquery))
+(print "Thread-Classic:")
+(print (Test-Thread-Classic newquery))

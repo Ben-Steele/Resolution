@@ -1,0 +1,4 @@
+(setf vcounter 0)
+(setf ccounter 0)
+(setf fcounter 0)
+

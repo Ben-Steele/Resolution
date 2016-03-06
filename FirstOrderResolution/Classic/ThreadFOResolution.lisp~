@@ -1,5 +1,7 @@
+(setf trueflag 0)
+(setf falseflag 0)
 
-(defun Ccompare (sentence clause)                 ;see if the complement of literal is in clause, return literal if it is (if literal is a negation (not "literal") it will not find the complement)
+(defun compare (sentence clause)                 ;see if the complement of literal is in clause, return literal if it is (if literal is a negation (not "literal") it will not find the complement)
     (dolist (i clause)                             ;for each literal in clause
       (if (listp i)                                ;if the literal is a list (this means it is a negation because it has the form (not "literal"))
           (if (and (eql (car i) 'not) (not (eql (car sentence) 'not))) 
@@ -17,14 +19,14 @@
   )                                            ;the dolist returns nil unless the return literal line is executed
 
 
-(defun CfactorRecurse (a clause)
+(defun factorRecurse (a clause)
   (if (equal a (car clause))
       nil
       (let ((unified (unifier a (car clause))))
         (if (equal unified nil)
             (if (equal (list-length clause) 1)
                 nil
-                (CfactorRecurse a (cdr clause))
+                (factorRecurse a (cdr clause))
                 )
             (cons a (cons a (cons unified '())))
             )
@@ -32,35 +34,35 @@
       )
   )
 
-(defun Cfactor (clause restclause)
-  (let ((factored (CfactorRecurse (car restclause) clause)))
+(defun factor (clause restclause)
+  (let ((factored (factorRecurse (car restclause) clause)))
     (if (eq factored nil)
         (if (equal (list-length restclause) 1)   
             clause
-            (Cfactor clause (cdr restclause))
+            (factor clause (cdr restclause))
             )
-        (CnewClause clause clause factored)
+        (newClause clause clause factored)
         )
     )
   )
 
-(defun Cfactorall (clauses)
-  (let ((factored (Cfactor (car clauses) (car clauses))))
+(defun factorall (clauses)
+  (let ((factored (factor (car clauses) (car clauses))))
     (if (equal factored nil)
         (if (equal (list-length clauses) 1) 
             nil
-            (Cfactorall (cdr clauses))
+            (factorall (cdr clauses))
             )
         (if (equal (list-length clauses) 1) 
             (cons factored nil)
-            (cons factored (Cfactorall (cdr clauses)))
+            (cons factored (factorall (cdr clauses)))
             )
         )
     )
   )
 
-(defun CnewClause (c1 c2 complement)                         ;given two clauses and a shared complement pair, return the resolution of those clauses, or T if it evaluates to true
-  (setf c1 (Ccombine c2 c1))                                 ;concatenate the two clauses and store it in c1 without repeating literals
+(defun newClause (c1 c2 complement)                         ;given two clauses and a shared complement pair, return the resolution of those clauses, or T if it evaluates to true
+  (setf c1 (combine c2 c1))                                 ;concatenate the two clauses and store it in c1 without repeating literals
   (setf c1 (remove (car complement) c1 :test #'equal))                    ;remove one complement
   (setf c1 (remove (cadr complement) c1 :test #'equal))                   ;remove the other complement
   (setf c1 (subst-bindings (caddr complement) c1))          ;apply bindings to the clause
@@ -87,14 +89,14 @@
   c1                                                        ;return c1
 )
 
-(defun Cresolve (clause1 clause2)                                          ;take in two clauses return the resolution of those clauses if there is one that does not evaluate to true
+(defun resolve (clause1 clause2)                                          ;take in two clauses return the resolution of those clauses if there is one that does not evaluate to true
   (let ((newclauses '())                                                  ;newclauses will store the resolved clause
         (newbindings '())) 
     (dolist (i clause1)                                                   ;for all literals in the first clause
-      (let ((complement (Ccompare i clause2)))                             ;store the complement found by compare in complement
+      (let ((complement (compare i clause2)))                             ;store the complement found by compare in complement
         (if (equal complement nil)                                            ;if there was no complement
             nil                                                           ;do nothing
-            (let ((tempclause (CnewClause clause1 clause2 complement)))    ;resolve the two clauses with their complement
+            (let ((tempclause (newClause clause1 clause2 complement)))    ;resolve the two clauses with their complement
               (if (equal tempclause T)                                    ;if the resolved clause is true 
                   nil                                                     ;don't add it to the list of new clauses
                   (if (equal tempclause nil)                              ;if the list is empty, the empty set was resolved
@@ -110,8 +112,8 @@
     )
 )
 
-(defun CsecondClauseLoop (a copy)                                     ;second layer of the iteration
-   (let ((new (Cresolve a (first copy)))                               ;resolve two clauses of the KB
+(defun secondClauseLoop (a copy)                                     ;second layer of the iteration
+   (let ((new (resolve a (first copy)))                               ;resolve two clauses of the KB
         (temp '()))                                                  ;create temp to add new clauses to
     (if (equal new T)                                                ;if the resolved clause is true
         '(T)                                                         ;the empty set was reached so the resolution is true
@@ -121,15 +123,15 @@
                   (cons new temp)                                    ;otherwise concatenate new to an empty list and return that
                   )
               (if (equal new nil)                                    ;if there are no new clauses to add
-                  (CsecondClauseLoop a (rest copy))                   ;return the next iteration of the recursion
-                  (cons new (CsecondClauseLoop a (rest copy)))        ;return the new clauses concatenated onto the next iteration of the recursion
+                  (secondClauseLoop a (rest copy))                   ;return the next iteration of the recursion
+                  (cons new (secondClauseLoop a (rest copy)))        ;return the new clauses concatenated onto the next iteration of the recursion
                   )
               )
         )
     )
 )
 
-(defun Ccombine (list1 list2)                          ;combine two lists without repeating any elements
+(defun combine (list1 list2)                          ;combine two lists without repeating any elements
   (dolist (r list1 list2)                             ;iterate over the first list, return the second list
     (let ((flag 0))
       (dolist (w list2)
@@ -146,22 +148,22 @@
     )
   )
 
-(defun CfirstClauseLoop (real copy)                                  ;first layer of recursive iteration
+(defun firstClauseLoop (real copy)                                  ;first layer of recursive iteration
   (let ((a (first copy))                                            ;pick out a clause of the KB
         (new '())                                                   ;this will hold all the new clauses that are resolved
         (new2 '()))                                                 ;a temporary list for formating
-    (setf new (CsecondClauseLoop a real))                            ;send a to secondClauseLoop to compare it with all the other clauses
+    (setf new (secondClauseLoop a real))                            ;send a to secondClauseLoop to compare it with all the other clauses
     (if (equal (find T new) T)                                      ;if one of the new clauses is T
         T                                                           ;the KB resolved successfully so return T
         (progn
-          (setf new (Ccombine new real))                             ;Otherwise combine the new clauses with the KB
+          (setf new (combine new real))                             ;Otherwise combine the new clauses with the KB
           (if (equal (list-length copy) 1)                          ;if this is the last step of iteration
               new                                                   ;return new
               (progn  
-                (setf new2 (CfirstClauseLoop real (rest copy)))      ;otherwise save the next step of iteration in new2
+                (setf new2 (firstClauseLoop real (rest copy)))      ;otherwise save the next step of iteration in new2
 		(if (equal new2 T)                                  ;if new2 is true
                     new2                                            ;return true because the KB resolved successfully
-                    C(combine new new2)                              ;return the combination of the next iteration with this iteration of recursion
+                    (combine new new2)                              ;return the combination of the next iteration with this iteration of recursion
                     )
                 )
               )
@@ -170,28 +172,67 @@
     )
   )
 
-(defun CrecurseResolution (clauses)                                               ;takes in full KB including ~a
-  (let ((resolved (CfirstClauseLoop clauses clauses)))                            ;save resolved KB into resolved
+(defun recurseResolution (clauses)                                               ;takes in full KB including ~a
+  (let ((resolved (firstClauseLoop clauses clauses)))                            ;save resolved KB into resolved
     (if (eq resolved T)                                                          ;if resolved is true, 
         T                                                                        ;the KB resolved successfully so return true
         (progn
-          (setf resolved (Ccombine (Cfactorall resolved) resolved))
+          (setf resolved (combine (factorall resolved) resolved))
           (if (equal (set-exclusive-or resolved clauses :test #'equal) nil)        ;if clauses has not changed (equal to resolved)
             nil                                                                  ;KB did not resolve so return nil
-            (CrecurseResolution resolved)                                         ;otherwise resolve again
+            (recurseResolution resolved)                                         ;otherwise resolve again
             )
           )
         )
     )
   )
 
-(defun Cresolution (KB s q)                           ;KB is the knowledge base, a is the current state and query (if "state", then "query")
+(defun resolutiontrue (KB s q)                           ;KB is the knowledge base, a is the current state and query (if "state", then "query")
   (setf KB (append s KB))                            ;add the state to the KB
   (if (equal 'not (first q))                         ;if a is a negative sentence
       (setf KB (cons (rest q) KB))                   ;concatenate the positive sentence onto the KB
     (setf KB (cons (cons (cons 'not q) nil) KB))   ;concatenate the negative sentence onto the KB
     )
-  (CrecurseResolution KB)                            ;recursively resolve until the solution is found
+  (setf trueflag (recurseResolution KB))                            ;recursively resolve until the solution is found
+  )
+
+(defun resolutionfalse (KB s q)                           ;KB is the knowledge base, a is the current state and query (if "state", then "query")
+  (setf KB (append s KB))                            ;add the state to the KB
+  (if (equal 'not (first q))                         ;if a is a negative sentence
+      (setf KB (cons (rest q) KB))                   ;concatenate the positive sentence onto the KB
+    (setf KB (cons (cons (cons 'not q) nil) KB))   ;concatenate the negative sentence onto the KB
+    )
+  (dolist (i KB)
+    (print i)
+    )
+  (setf falseflag (recurseResolution KB))                            ;recursively resolve until the solution is found
+)
+
+(defun resolution (KB s q)
+  (setf trueflag 0)
+  (setf flaseflag 0)
+  (let ((opposite nil))
+    (if (equal 'not (first q))                         ;if a is a negative sentence
+        (setf opposite (rest q))                   ;concatenate the positive sentence onto the KB
+        (setf opposite (cons 'not q))   ;concatenate the negative sentence onto the KB
+        )
+    (let ((positive (sb-thread:make-thread (lambda () (resolutiontrue KB s q))))
+	  (negative (sb-thread:make-thread (lambda () (resolutionfalse KB s opposite)))))
+      (loop while (and (equal trueflag 0) (equal falseflag 0)) do
+	    (cons nil nil)
+	    )
+      (if (equal trueflag 0)
+	  (progn 
+	    (sb-thread:terminate-thread positive)
+	    (not falseflag)
+	    )
+        (progn
+          (sb-thread:terminate-thread negative)
+          trueflag
+          )
+        )
+      )
+    )
   )
 
 "(let ((CNF '(((not (hound $x1)) (howl $x1)) 
@@ -210,7 +251,7 @@
 ;(print (factor '((NOT (KILLS $X3 $Z3)) (NOT (ANIMAL $Z3)) (NOT (ANIMAL $X3))) '((NOT (KILLS $X3 $Z3)) (NOT (ANIMAL $Z3)) (NOT (ANIMAL $X3)))))
 
 
-"(let ((CNF '(((animal (f $x)) (loves (g $x) $x)) 
+(let ((CNF '(((animal (f $x)) (loves (g $x) $x)) 
             ((not (loves $x2 (f $x2))) (loves (g $x2) $x2)) 
             ((not (loves $y3 $x3)) (not (animal $z3)) (not (kills $x3 $z3)))
             ((not (animal $x4)) (loves jack $x4))
@@ -220,8 +261,10 @@
             )
            )
       )
-  (print (resolution CNF nil '((kills curiosity tuna))))
-  )"
+  (print (resolution CNF nil '(not (kills curiosity tuna))))
+  (print trueflag)
+  (print falseflag)
+)
 
 "(let (( CNF '(((not (animal $x)) (loves jack $x))
               ((not (loves $y2 $x2)) (not (animal $z2)) (not (kills $x2 $z2)))

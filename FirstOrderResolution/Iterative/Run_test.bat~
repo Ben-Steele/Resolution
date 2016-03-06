@@ -1,0 +1,2 @@
+
+sbcl --noinform --load Unification.lisp --load ThreadIterFOResolution.lisp --load Tester.lisp --load GetStats.lisp

@@ -6,7 +6,7 @@
     (dolist (i clause)                             ;for each literal in clause
       (if (listp i)                                ;if the literal is a list (this means it is a negation because it has the form (not "literal"))
           (if (and (eql (car i) 'not) (not (eql (car sentence) 'not))) 
-              (let ((TInewbindings (unifier sentence (cadr i))))
+              (let ((newbindings (unifier sentence (cadr i))))
                 (if (equal newbindings nil)  
                     nil
                     (return (cons i (cons sentence (cons newbindings '()))))                       ;return the unification bindings
@@ -49,7 +49,7 @@
 
 (defun TIfactorall (clauses)
   (let ((factored (TIfactor (car clauses) (car clauses))))
-    (if (equal factored nil)
+    (if (or (equal factored nil) (equal factored T))
         (if (equal (list-length clauses) 1) 
             nil
             (TIfactorall (cdr clauses))
@@ -82,7 +82,7 @@
             )
         )
       )
-    (if (eq flag 0)                                         ;if the flag equals 0, change c1 to true
+    (if (eq flag 0)                                         ;if the flag eFquals 0, change c1 to true
         (setf c1 T)
         nil
         )
@@ -91,8 +91,7 @@
 )
 
 (defun TIresolve (clause1 clause2)                                          ;take in two clauses return the resolution of those clauses if there is one that does not evaluate to true
-  (let ((newclauses '())                                                  ;newclauses will store the resolved clause
-        (newbindings '())) 
+  (let ((newclauses '()))                                                  ;newclauses will store the resolved clause
     (dolist (i clause1)                                                   ;for all literals in the first clause
       (let ((complement (TIcompare i clause2)))                             ;store the complement found by compare in complement
         (if (equal complement nil)                                            ;if there was no complement
@@ -174,22 +173,27 @@
   )
 
 (defun TIrecurseResolution (using saving maxlength currentlength)                                               ;takes in full KB including ~a
-  (let ((resolved (TIfirstClauseLoop using using)))                            ;save resolved KB into resolved
+  (let ((resolved (TIfirstClauseLoop using using))                            ;save resolved KB into resolved
+	(factorallresult nil))
     (if (eq resolved T)                                                          ;if resolved is true, 
         T                                                                        ;the KB resolved successfully so return true
-        (progn
+      (progn
+	(setf factorallresult (TIfactorall resolved))
           (setf resolved (TIcombine (TIfactorall resolved) resolved))
-          (let ((sorted (TIsorter resolved maxlength currentlength)))
-            (setf resolved (car sorted))
-            (setf saving (TIcombine (cadr sorted) saving))
-            (setf maxlength (caddr sorted))
-            (if (equal (set-exclusive-or resolved using :test #'equal) nil)        ;if clauses has not changed (equal to resolved)
-                (if (eq maxlength currentlength)
-                    nil                                                                  ;KB did not resolve so return nil
+	  (if (equal (find T resolved) T)
+	      T
+	    (let ((sorted (TIsorter resolved maxlength currentlength)))
+	      (setf resolved (car sorted))
+	      (setf saving (TIcombine (cadr sorted) saving))
+	      (setf maxlength (caddr sorted))
+	      (if (equal (set-exclusive-or resolved using :test #'equal) nil)        ;if clauses has not changed (equal to resolved)
+		  (if (eq maxlength currentlength)
+		      nil                                                                  ;KB did not resolve so return nil
                     (TIextend resolved saving maxlength currentlength)
                     )
                 (TIrecurseResolution resolved saving maxlength currentlength)
                 )
+	      )
             )
           )
         )
@@ -250,19 +254,15 @@
         )
     (let ((positive (sb-thread:make-thread (lambda () (TIresolutiontrue KB s q))))
 	  (negative (sb-thread:make-thread (lambda () (TIresolutionfalse KB s opposite)))))
-      (loop while (and (equal TItrueflag 0) (equal TIfalseflag 0)) do
+      (loop while (not (or (equal TItrueflag T) (equal TItrueflag nil) (equal TIfalseflag T))) do
 	    (cons nil nil)
 	    )
+      (sb-thread:terminate-thread positive)
+      (sb-thread:terminate-thread negative)
       (if (equal TItrueflag 0)
-	  (progn 
-	    (sb-thread:terminate-thread positive)
-	    (not TIfalseflag)
-	    )
-        (progn
-          (sb-thread:terminate-thread negative)
-          TItrueflag
-          )
-        )
+	  (not TIfalseflag)
+	TItrueflag
+	)
       )
     )
   )
@@ -276,11 +276,6 @@
              )))           ;CNF form of an example KB
   (print (resolution CNF '(((ls john)) ((mouse b))) '((have john b))))       ;either of the form (not (a)) or ((a))
 )"
-
-;(print (newclause '((have $x john) (have dave john) (gave $x dave)) '((have dave $y) (not (have dave john)) (not (gave $x $y))) '(((have dave john)) (not (have dave john)) ((nil)))))
-;(print (factorall '(((NOT (KILLS $X3 $Z3)) (NOT (ANIMAL $Z3)) (NOT (ANIMAL $X3))))))
-;(print (factor '((NOT (KILLS $X3 $Z3)) (NOT (ANIMAL $Z3)) (NOT (ANIMAL $X3))) '((NOT (KILLS $X3 $Z3)) (NOT (ANIMAL $Z3)) (NOT (ANIMAL $X3)))))
-
 
 "(let ((CNF '(((animal (f $x)) (loves (g $x) $x)) 
             ((not (loves $x2 (f $x2))) (loves (g $x2) $x2)) 

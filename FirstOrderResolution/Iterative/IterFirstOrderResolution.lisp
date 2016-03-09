@@ -91,10 +91,9 @@
 )
 
 (defun Iresolve (clause1 clause2)                                          ;take in two clauses return the resolution of those clauses if there is one that does not evaluate to true
-  (let ((newclauses '())                                                  ;newclauses will store the resolved clause
-        (newbindings '())) 
+  (let ((newclauses '()))                                                  ;newclauses will store the resolved clause
     (dolist (i clause1)                                                   ;for all literals in the first clause
-      (let ((complement (compare i clause2)))                             ;store the complement found by compare in complement
+      (let ((complement (Icompare i clause2)))                             ;store the complement found by compare in complement
         (if (equal complement nil)                                            ;if there was no complement
             nil                                                           ;do nothing
             (let ((tempclause (newClause clause1 clause2 complement)))    ;resolve the two clauses with their complement

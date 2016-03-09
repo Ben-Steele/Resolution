@@ -46,7 +46,7 @@
 
 (defun Cfactorall (clauses)
   (let ((factored (Cfactor (car clauses) (car clauses))))
-    (if (equal factored nil)
+    (if (or (equal factored nil) (equal factored T))
         (if (equal (list-length clauses) 1) 
             nil
             (Cfactorall (cdr clauses))
@@ -88,8 +88,7 @@
 )
 
 (defun Cresolve (clause1 clause2)                                          ;take in two clauses return the resolution of those clauses if there is one that does not evaluate to true
-  (let ((newclauses '())                                                  ;newclauses will store the resolved clause
-        (newbindings '())) 
+  (let ((newclauses '()))                                                  ;newclauses will store the resolved clause
     (dolist (i clause1)                                                   ;for all literals in the first clause
       (let ((complement (Ccompare i clause2)))                             ;store the complement found by compare in complement
         (if (equal complement nil)                                            ;if there was no complement
@@ -161,7 +160,7 @@
                 (setf new2 (CfirstClauseLoop real (rest copy)))      ;otherwise save the next step of iteration in new2
 		(if (equal new2 T)                                  ;if new2 is true
                     new2                                            ;return true because the KB resolved successfully
-                    C(combine new new2)                              ;return the combination of the next iteration with this iteration of recursion
+                    (Ccombine new new2)                              ;return the combination of the next iteration with this iteration of recursion
                     )
                 )
               )
@@ -176,10 +175,13 @@
         T                                                                        ;the KB resolved successfully so return true
         (progn
           (setf resolved (Ccombine (Cfactorall resolved) resolved))
-          (if (equal (set-exclusive-or resolved clauses :test #'equal) nil)        ;if clauses has not changed (equal to resolved)
-            nil                                                                  ;KB did not resolve so return nil
-            (CrecurseResolution resolved)                                         ;otherwise resolve again
-            )
+	  (if (equal (find T resolved) T)
+	      T
+	    (if (equal (set-exclusive-or resolved clauses :test #'equal) nil)        ;if clauses has not changed (equal to resolved)
+		nil                                                                  ;KB did not resolve so return nil
+	      (CrecurseResolution resolved)                                         ;otherwise resolve again
+	      )
+	    )
           )
         )
     )

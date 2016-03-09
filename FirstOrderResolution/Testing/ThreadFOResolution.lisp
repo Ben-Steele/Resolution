@@ -5,7 +5,7 @@
     (dolist (i clause)                             ;for each literal in clause
       (if (listp i)                                ;if the literal is a list (this means it is a negation because it has the form (not "literal"))
           (if (and (eql (car i) 'not) (not (eql (car sentence) 'not))) 
-              (let ((TCnewbindings (unifier sentence (cadr i))))
+              (let ((newbindings (unifier sentence (cadr i))))
                 (if (equal newbindings nil)  
                     nil
                     (return (cons i (cons sentence (cons newbindings '()))))                       ;return the unification bindings
@@ -48,7 +48,7 @@
 
 (defun TCfactorall (clauses)
   (let ((factored (TCfactor (car clauses) (car clauses))))
-    (if (equal factored nil)
+    (if (or (equal factored nil) (equal factored T))
         (if (equal (list-length clauses) 1) 
             nil
             (TCfactorall (cdr clauses))
@@ -90,8 +90,7 @@
 )
 
 (defun TCresolve (clause1 clause2)                                          ;take in two clauses return the resolution of those clauses if there is one that does not evaluate to true
-  (let ((newclauses '())                                                  ;newclauses will store the resolved clause
-        (newbindings '())) 
+  (let ((newclauses '()))                                               ;newclauses will store the resolved clause
     (dolist (i clause1)                                                   ;for all literals in the first clause
       (let ((complement (TCcompare i clause2)))                             ;store the complement found by compare in complement
         (if (equal complement nil)                                            ;if there was no complement
@@ -113,7 +112,7 @@
 )
 
 (defun TCsecondClauseLoop (a copy)                                     ;second layer of the iteration
-   (let ((new (resolve a (first copy)))                               ;resolve two clauses of the KB
+   (let ((new (TCresolve a (first copy)))                               ;resolve two clauses of the KB
         (temp '()))                                                  ;create temp to add new clauses to
     (if (equal new T)                                                ;if the resolved clause is true
         '(T)                                                         ;the empty set was reached so the resolution is true
@@ -178,10 +177,13 @@
         T                                                                        ;the KB resolved successfully so return true
         (progn
           (setf resolved (TCcombine (TCfactorall resolved) resolved))
-          (if (equal (set-exclusive-or resolved clauses :test #'equal) nil)        ;if clauses has not changed (equal to resolved)
-            nil                                                                  ;KB did not resolve so return nil
-            (TCrecurseResolution resolved)                                         ;otherwise resolve again
-            )
+	  (if (equal (find T resolved) T)
+	      T
+	    (if (equal (set-exclusive-or resolved clauses :test #'equal) nil)        ;if clauses has not changed (equal to resolved)
+		nil                                                                  ;KB did not resolve so return nil
+	      (TCrecurseResolution resolved)                                         ;otherwise resolve again
+	      )
+	    )
           )
         )
     )
@@ -218,16 +220,12 @@
       (loop while (not (or (equal TCtrueflag T) (equal TCtrueflag nil) (equal TCfalseflag T))) do
 	    (cons nil nil)
 	    )
+      (sb-thread:terminate-thread positive)      
+      (sb-thread:terminate-thread negative)
       (if (equal TCtrueflag 0)
-	  (progn 
-	    (sb-thread:terminate-thread positive)
-	    (not TCfalseflag)
-	    )
-        (progn
-          (sb-thread:terminate-thread negative)
-          TCtrueflag
-          )
-        )
+	  (not TCfalseflag)
+	TCtrueflag
+	)
       )
     )
   )

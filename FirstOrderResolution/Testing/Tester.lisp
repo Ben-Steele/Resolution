@@ -66,6 +66,13 @@
   )
 
 (defun gen-KB (num-clauses _num-cons _num-forms)
+  (setf vcounter 0)
+  (setf ccounter 0)
+  (setf fcounter 0)
+  (setf prev-cons nil)
+  (setf prev-single-forms nil)
+  (setf prev-double-forms nil)
+  (setf prev-var nil)
   (setf num-cons _num-cons)
   (setf num-forms _num-forms)
   (recurse-gen-KB num-clauses)
@@ -250,19 +257,19 @@
   )
 
 (defun test-Iter (KB query)
-  (Iresolution KB nil (query))
+  (Iresolution KB nil query)
   )
 
 (defun test-Thread-Iter (KB query)
-  (TIresolution KB nil (query))
+  (TIresolution KB nil query)
   )
 
 (defun test-Classic (KB query)
-  (Cresolution KB nil (query))
+  (Cresolution KB nil query)
   )
 
 (defun test-Thread-Classic (KB query)
-  (TCresolution KB nil (query))
+  (TCresolution KB nil query)
   )
 
-(setf kb1 (gen-KB 5 2 3))
+

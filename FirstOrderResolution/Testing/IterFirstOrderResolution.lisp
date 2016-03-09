@@ -36,7 +36,7 @@
   )
 
 (defun Ifactor (clause restclause)
-  (let ((factored (factorRecurse (car restclause) clause)))
+  (let ((factored (IfactorRecurse (car restclause) clause)))
     (if (eq factored nil)
         (if (equal (list-length restclause) 1)   
             clause
@@ -48,8 +48,8 @@
   )
 
 (defun Ifactorall (clauses)
-  (let ((factored (factor (car clauses) (car clauses))))
-    (if (equal factored nil)
+  (let ((factored (Ifactor (car clauses) (car clauses))))
+    (if (or (equal factored nil) (equal factored T))
         (if (equal (list-length clauses) 1) 
             nil
             (Ifactorall (cdr clauses))
@@ -91,13 +91,12 @@
 )
 
 (defun Iresolve (clause1 clause2)                                          ;take in two clauses return the resolution of those clauses if there is one that does not evaluate to true
-  (let ((newclauses '())                                                  ;newclauses will store the resolved clause
-        (newbindings '())) 
+  (let ((newclauses '()))                                                  ;newclauses will store the resolved clause
     (dolist (i clause1)                                                   ;for all literals in the first clause
-      (let ((complement (compare i clause2)))                             ;store the complement found by compare in complement
+      (let ((complement (Icompare i clause2)))                             ;store the complement found by compare in complement
         (if (equal complement nil)                                            ;if there was no complement
             nil                                                           ;do nothing
-            (let ((tempclause (newClause clause1 clause2 complement)))    ;resolve the two clauses with their complement
+            (let ((tempclause (InewClause clause1 clause2 complement)))    ;resolve the two clauses with their complement
               (if (equal tempclause T)                                    ;if the resolved clause is true 
                   nil                                                     ;don't add it to the list of new clauses
                   (if (equal tempclause nil)                              ;if the list is empty, the empty set was resolved
@@ -163,7 +162,7 @@
               (progn  
                 (setf new2 (IfirstClauseLoop real (rest copy)))      ;otherwise save the next step of iteration in new2
 		(if (equal new2 T)                                  ;if new2 is true
-                    new2                                            ;return true because the KB resolved successfully
+                    T                                            ;return true because the KB resolved successfully
                     (Icombine new new2)                              ;return the combination of the next iteration with this iteration of recursion
                     )
                 )
@@ -179,19 +178,22 @@
         T                                                                        ;the KB resolved successfully so return true
         (progn
           (setf resolved (Icombine (Ifactorall resolved) resolved))
-          (let ((sorted (Isorter resolved maxlength currentlength)))
-            (setf resolved (car sorted))
-            (setf saving (Icombine (cadr sorted) saving))
-            (setf maxlength (caddr sorted))
-            (if (equal (set-exclusive-or resolved using :test #'equal) nil)        ;if clauses has not changed (equal to resolved)
-                (if (eq maxlength currentlength)
-                    nil                                                                  ;KB did not resolve so return nil
-                    (Iextend resolved saving maxlength currentlength)
-                    )
-                (IrecurseResolution resolved saving maxlength currentlength)
-                )
-            )
-          )
+	    (let ((sorted (Isorter resolved maxlength currentlength)))
+	      (setf resolved (car sorted))
+	      (setf saving (Icombine (cadr sorted) saving))
+	      (setf maxlength (caddr sorted))
+	      (if (equal (find T resolved) T)
+		  T
+		(if (equal (set-exclusive-or resolved using :test #'equal) nil)        ;if clauses has not changed (equal to resolved)
+		    (if (eq maxlength currentlength)
+			nil                                                                  ;KB did not resolve so return nil
+		      (Iextend resolved saving maxlength currentlength)
+		      )
+		  (IrecurseResolution resolved saving maxlength currentlength)
+		  )
+		)
+	      )
+	    )
         )
     )
   )

@@ -6,7 +6,7 @@
     (dolist (i clause)                             ;for each literal in clause
       (if (listp i)                                ;if the literal is a list (this means it is a negation because it has the form (not "literal"))
           (if (and (eql (car i) 'not) (not (eql (car sentence) 'not))) 
-              (let ((TInewbindings (unifier sentence (cadr i))))
+              (let ((newbindings (unifier sentence (cadr i))))
                 (if (equal newbindings nil)  
                     nil
                     (return (cons i (cons sentence (cons newbindings '()))))                       ;return the unification bindings
@@ -91,8 +91,7 @@
 )
 
 (defun TIresolve (clause1 clause2)                                          ;take in two clauses return the resolution of those clauses if there is one that does not evaluate to true
-  (let ((newclauses '())                                                  ;newclauses will store the resolved clause
-        (newbindings '())) 
+  (let ((newclauses '()))                                                  ;newclauses will store the resolved clause
     (dolist (i clause1)                                                   ;for all literals in the first clause
       (let ((complement (TIcompare i clause2)))                             ;store the complement found by compare in complement
         (if (equal complement nil)                                            ;if there was no complement

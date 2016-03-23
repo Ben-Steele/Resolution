@@ -1,0 +1,66 @@
+@inproceedings{RandomForestPET,
+  title={Estimating class probabilities in random forests},
+  author={Bostrom, Henrik},
+  booktitle={Sixth International Conference on Machine Learning and Applications},
+  pages={211--216},
+  year={2007},
+  organization={IEEE}
+}
+@article{baggingPETs,
+  title={Tree induction for probability-based ranking},
+  author={Provost, Foster and Domingos, Pedro},
+  journal={Machine Learning},
+  volume={52},
+  number={3},
+  pages={199--215},
+  year={2003},
+  publisher={Springer}
+}
+@article{ucirepo,
+  title={UCI Repository of Machine Learning Databases},
+  author={Blake, CL and Merz, C},
+  journal={University of California, Department of Information and Computer Science},
+  year={1998}
+}
+@article{CAP,
+  title={Probability models for open set recognition},
+  author={Jain, Lalit and Boult, Terrance and Scheirer, Walter},
+  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  volume={36},
+  number={11},
+  pages={2317-1324},
+  year={2014},
+  publisher={IEEE}
+}
+@article{EVT,
+  title={Meta-recognition: The theory and practice of recognition score analysis},
+  author={Scheirer, Walter J and Rocha, Anderson and Micheals, Ross J and Boult, Terrance E},
+  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  volume={33},
+  number={8},
+  pages={1689--1695},
+  year={2011},
+  publisher={IEEE}
+}
+@article{RF,
+  title={Random forests},
+  author={Breiman, Leo},
+  journal={Machine learning},
+  volume={45},
+  number={1},
+  pages={5--32},
+  year={2001},
+  publisher={Springer}
+}
+
+@article{sklearn,
+ title={Scikit-learn: Machine Learning in {P}ython},
+ author={Pedregosa, F. and Varoquaux, G. and Gramfort, A. and Michel, V.
+         and Thirion, B. and Grisel, O. and Blondel, M. and Prettenhofer, P.
+         and Weiss, R. and Dubourg, V. and Vanderplas, J. and Passos, A. and
+         Cournapeau, D. and Brucher, M. and Perrot, M. and Duchesnay, E.},
+ journal={Journal of Machine Learning Research},
+ volume={12},
+ pages={2825--2830},
+ year={2011}
+}

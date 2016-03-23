@@ -1,0 +1,47 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+
+\author{
+Ben Steele \\
+UCCS Machine Learning REU \\
+\texttt{Benjamin.Steele@coloradocollege.edu} \\
+}
+\begin{document}
+
+\title{Open Set Forests}
+
+\author{\IEEEauthorblockN{Ben Steele}
+\IEEEauthorblockA{UCCS Machine Learning REU\\
+Benjamin.Steele@ColoradoCollege.edu}}
+
+\maketitle
+
+\begin{abstract}
+wwww
+\end{abstract}
+\section{Introduction}
+
+www
+\section{Method}
+	
+We will be modifying the random forest from the Sci Kit learn library \cite{sklearn} to produce an open set forest.  A decision tree in a random forest produces disjoint classes with linear boundaries parallel to the axes.  At each node of a decision tree a linear boundary called the decision boundary is created, separating the data points of that node.  Our modification adds EVT models to each of these decision boundaries in order to compute pertinence.  
+\subsection{Node Pertinence}
+wwww
+\subsection{Tree Pertinence}
+wwww
+\subsection{Forest Pertinence}
+
+ wwwwww
+\section{Evaluation}
+ww
+
+\section{Conclusions}
+
+wwww
+\section{Acknowledgments}
+wwww
+\bibliography{BibResolution}
+\bibliographystyle{plain}
+
+\end{document}

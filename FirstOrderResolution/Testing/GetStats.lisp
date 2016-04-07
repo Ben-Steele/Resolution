@@ -102,7 +102,7 @@ if there were an empty string between them."
 										   (setf TI (test-thread-iter kb1 curquery))
 										   (setf flag2 nil))))
 						(timer (sb-thread:make-thread (lambda ()
-										(let ((w 5))
+										(let ((w 2))
 										  (loop while (> w 0) do
 											(sleep 1)
 											(setf w (- w 1))

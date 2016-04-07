@@ -11,6 +11,7 @@ def cleanData():
             None
         else:
             line = line.replace(",", "")
+            line = line.replace(" ", ",")
             writeFile.write(line)
 
 cleanData()

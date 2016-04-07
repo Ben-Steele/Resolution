@@ -277,7 +277,7 @@
   (print (resolution CNF '(((ls john)) ((mouse b))) '((have john b))))       ;either of the form (not (a)) or ((a))
 )"
 
-"(let ((CNF '(((animal (f $x)) (loves (g $x) $x)) 
+(let ((CNF '(((animal (f $x)) (loves (g $x) $x)) 
             ((not (loves $x2 (f $x2))) (loves (g $x2) $x2)) 
             ((not (loves $y3 $x3)) (not (animal $z3)) (not (kills $x3 $z3)))
             ((not (animal $x4)) (loves jack $x4))
@@ -287,10 +287,10 @@
             )
            )
       )
-  (print (resolution CNF nil '((kills curiosity tuna))))
-  (print trueflag)
-  (print falseflag)
-)"
+  (print (TIresolution CNF nil '((kills curiosity tuna))))
+  (print TItrueflag)
+  (print TIfalseflag)
+)
 
 "(let (( CNF '(((not (animal $x)) (loves jack $x))
               ((not (loves $y2 $x2)) (not (animal $z2)) (not (kills $x2 $z2)))
